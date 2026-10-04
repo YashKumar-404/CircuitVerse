@@ -88,6 +88,27 @@ RSpec.describe User, type: :model do
 
       expect(queries.length).to eq(1)
     end
+
+    it "reflects a star added after the ids were memoized" do
+      user = FactoryBot.create(:user)
+      project = FactoryBot.create(:project, author: user, project_access_type: "Public")
+      expect(user.starred_project_ids).to eq([])
+
+      FactoryBot.create(:star, user: user, project: project)
+
+      expect(user.starred_project_ids).to eq([project.id])
+    end
+
+    it "reflects a star removed after the ids were memoized" do
+      user = FactoryBot.create(:user)
+      project = FactoryBot.create(:project, author: user, project_access_type: "Public")
+      star = FactoryBot.create(:star, user: user, project: project)
+      expect(user.starred_project_ids).to eq([project.id])
+
+      star.destroy!
+
+      expect(user.starred_project_ids).to eq([])
+    end
   end
 
   describe "public methods" do

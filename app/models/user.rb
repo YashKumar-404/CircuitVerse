@@ -126,6 +126,13 @@ class User < ApplicationRecord
     @starred_project_ids ||= stars.pluck(:project_id)
   end
 
+  # Drops the memoized list above so the next call re-reads it. Star create and
+  # destroy callbacks call this; otherwise a just-starred or just-unstarred
+  # project would keep a stale is_starred value for the life of the instance.
+  def reset_starred_project_ids
+    @starred_project_ids = nil
+  end
+
   private
 
     def send_welcome_mail

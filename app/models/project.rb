@@ -77,7 +77,7 @@ class Project < ApplicationRecord
   def toggle_star(user)
     star = Star.find_by(user_id: user.id, project_id: id)
     if star.nil?
-      @star = Star.create!(user_id: user.id, project_id: id)
+      @star = Star.create!(user: user, project_id: id)
       true
     else
       star.destroy!
