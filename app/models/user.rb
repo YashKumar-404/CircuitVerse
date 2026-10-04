@@ -122,8 +122,11 @@ class User < ApplicationRecord
 
   # Memoized so that serializing a list of projects issues a single query on
   # stars instead of one EXISTS query per project (N+1).
+  # Star.where rather than stars.pluck: once the association has been loaded,
+  # stars.pluck is answered from that in-memory copy and misses stars added
+  # afterwards.
   def starred_project_ids
-    @starred_project_ids ||= stars.pluck(:project_id)
+    @starred_project_ids ||= Star.where(user_id: id).pluck(:project_id)
   end
 
   # Drops the memoized list above so the next call re-reads it. Star create and
