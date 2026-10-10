@@ -80,8 +80,22 @@ Rails.application.configure do
   config.action_mailer.asset_host = "https://circuitverse.org"
 
   aws_credentials = Aws::Credentials.new(ENV['AWS_ACCESS_KEY_ID_SES'], ENV['AWS_SECRET_ACCESS_KEY_SES'])
+
+  # Action Mailer builds a delivery handler per message, so settings without a client
+  # make the SES SDK open a fresh connection for every email. Reuse one client per
+  # process and bound its timeouts so a slow SES response cannot hold a worker (#7994).
+  # The region falls back to the deployed one because the production image build
+  # boots this file without AWS_REGION set.
+  sesv2_client = Aws::SESV2::Client.new(
+    credentials: aws_credentials,
+    region: ENV.fetch("AWS_REGION", "ap-south-1"),
+    http_open_timeout: 5,
+    http_read_timeout: 15,
+    retry_mode: "standard",
+    max_attempts: 3
+  )
   config.action_mailer.delivery_method = :ses_v2
-  config.action_mailer.ses_v2_settings = { credentials: aws_credentials }
+  config.action_mailer.ses_v2_settings = { sesv2_client: sesv2_client }
 
   # Web Push (VAPID) configuration (preserved from Rails 7)
   config.vapid_public_key = ENV["VAPID_PUBLIC_KEY"] || ""
